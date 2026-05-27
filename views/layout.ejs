@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title || 'Sistema de Gestão' %></title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <% if (user) { %>
+        <header>
+            <div class="container">
+                <div class="header-content">
+                    <div class="logo">
+                        <div class="logo-icon">
+                            <i class="fas fa-headset"></i>
+                        </div>
+                        <div class="logo-text">Sistema Gestão</div>
+                    </div>
+                    <div class="user-info">
+                        <div class="user-avatar"><%= user.nome.charAt(0) %></div>
+                        <div>
+                            <div><%= user.nome %></div>
+                            <div style="font-size: 0.8rem; opacity: 0.8;"><%= user.tipo %></div>
+                        </div>
+                        <a href="/logout" class="logout-btn">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <nav class="nav-menu">
+            <div class="container nav-container">
+                <div class="nav-links">
+                    <a href="/dashboard" class="nav-link <%= currentPage === 'dashboard' ? 'active' : '' %>">
+                        <i class="fas fa-tachometer-alt"></i> Dashboard
+                    </a>
+                    <a href="/solicitacoes" class="nav-link <%= currentPage === 'solicitacoes' ? 'active' : '' %>">
+                        <i class="fas fa-list"></i> Solicitações
+                    </a>
+                    <a href="/solicitacoes/nova" class="nav-link <%= currentPage === 'nova-solicitacao' ? 'active' : '' %>">
+                        <i class="fas fa-plus"></i> Nova Solicitação
+                    </a>
+                </div>
+            </div>
+        </nav>
+    <% } %>
+
+    <main>
+        <div class="container">
+            <%- body %>
+        </div>
+    </main>
+
+    <% if (user) { %>
+        <footer>
+            <div class="container">
+                <div class="developer-info">
+                    <p>Sistema desenvolvido por <strong>DevTeam</strong> &copy; 2023</p>
+                </div>
+            </div>
+        </footer>
+    <% } %>
+
+    <script src="/js/main.js"></script>
+</body>
+</html>

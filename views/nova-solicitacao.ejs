@@ -1,0 +1,85 @@
+<% const title = 'Nova Solicitação' %>
+<% const currentPage = 'nova-solicitacao' %>
+<%- include('layout', { title, currentPage, body: `
+
+<h1 class="page-title">
+    <i class="fas fa-plus"></i>
+    Nova Solicitação
+</h1>
+
+<div class="form-card">
+    <form method="POST" action="/solicitacoes/nova">
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="cliente_nome" class="form-label">Nome do Cliente *</label>
+                <input type="text" id="cliente_nome" name="cliente_nome" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="cliente_email" class="form-label">Email do Cliente *</label>
+                <input type="email" id="cliente_email" name="cliente_email" class="form-control" required>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="cliente_telefone" class="form-label">Telefone</label>
+            <input type="text" id="cliente_telefone" name="cliente_telefone" class="form-control">
+        </div>
+        
+        <div class="form-group">
+            <label for="titulo" class="form-label">Assunto *</label>
+            <input type="text" id="titulo" name="titulo" class="form-control" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="descricao" class="form-label">Descrição Detalhada *</label>
+            <textarea id="descricao" name="descricao" class="form-control" rows="6" required></textarea>
+        </div>
+        
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="tipo" class="form-label">Tipo *</label>
+                <select id="tipo" name="tipo" class="form-control" required>
+                    <option value="">Selecione o tipo</option>
+                    <option value="reclamacao">Reclamação</option>
+                    <option value="sugestao">Sugestão</option>
+                    <option value="elogio">Elogio</option>
+                    <option value="duvida">Dúvida</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="categoria" class="form-label">Categoria *</label>
+                <select id="categoria" name="categoria" class="form-control" required>
+                    <option value="">Selecione a categoria</option>
+                    <option value="faturacao">Faturação</option>
+                    <option value="servico">Serviço</option>
+                    <option value="tecnico">Problema Técnico</option>
+                    <option value="outro">Outro</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="prioridade" class="form-label">Prioridade</label>
+            <select id="prioridade" name="prioridade" class="form-control">
+                <option value="media">Média</option>
+                <option value="baixa">Baixa</option>
+                <option value="alta">Alta</option>
+                <option value="urgente">Urgente</option>
+            </select>
+        </div>
+        
+        <div class="form-actions">
+            <a href="/solicitacoes" class="btn btn-secondary">Cancelar</a>
+            <button type="submit" class="btn btn-primary">Criar Solicitação</button>
+        </div>
+    </form>
+</div>
+
+<% if (error) { %>
+<div class="alert alert-error">
+    <i class="fas fa-exclamation-circle"></i>
+    <%= error %>
+</div>
+<% } %>
+
+` }) %>

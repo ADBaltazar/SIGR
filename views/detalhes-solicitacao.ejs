@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalhes da Solicitação - Sistema de Gestão</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ========== ESTILOS (MANTIDOS E ADICIONADOS) ========== */
+        :root { --primary: #0046B8; --secondary: #F6B125; --white: #FFFFFF; --light-gray: #F5F5F5; --dark-gray: #333333; --success: #28a745; --warning: #ffc107; --danger: #dc3545; --info: #17a2b8; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--light-gray); color: var(--dark-gray); line-height: 1.6; min-height: 100vh; }
+        .container { width: 100%; max-width: 1400px; margin: 0 auto; padding: 0 1rem; }
+        header { background: linear-gradient(135deg, var(--primary) 0%, #003399 100%); color: var(--white); box-shadow: 0 4px 12px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
+        .header-content { display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; }
+        .logo { display: flex; align-items: center; gap: 1rem; }
+        .logo-icon { width: 50px; height: 50px; background-color: rgba(255,255,255,0.15); border-radius: 12px; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); }
+        .logo-icon i { font-size: 1.5rem; color: var(--secondary); }
+        .logo-text { font-size: 1.5rem; font-weight: 700; }
+        .user-info { display: flex; align-items: center; gap: 1rem; }
+        .user-avatar { width: 40px; height: 40px; border-radius: 50%; background-color: var(--secondary); display: flex; align-items: center; justify-content: center; color: var(--dark-gray); font-weight: bold; }
+        main { padding: 0 0 2rem 0; }
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        .page-title { font-size: 2rem; font-weight: 700; color: #333333; display: flex; align-items: center; gap: 0.5rem; padding: 25px 0; }
+        .page-title i { color: var(--secondary); }
+        .back-btn { display: inline-flex; align-items: center; gap: 0.5rem; background: var(--white); color: var(--dark-gray); padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; transition: all 0.3s; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .back-btn:hover { background: var(--light-gray); transform: translateY(-2px); }
+        .details-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; }
+        .main-info { display: flex; flex-direction: column; gap: 2rem; }
+        .info-card { background-color: var(--white); border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--light-gray); }
+        .card-title { font-size: 1.2rem; font-weight: 600; color: var(--dark-gray); display: flex; align-items: center; gap: 0.5rem; }
+        .card-title i { color: var(--primary); }
+        .badge { display: inline-block; padding: 0.3rem 0.7rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
+        .badge-pendente, .badge-pending { background-color: rgba(246,177,37,0.1); color: var(--secondary); }
+        .badge-em_analise, .badge-em_andamento { background-color: rgba(0,70,184,0.1); color: var(--primary); }
+        .badge-resolvido { background-color: rgba(40,167,69,0.1); color: var(--success); }
+        .badge-cancelado { background-color: rgba(220,53,69,0.1); color: var(--danger); }
+        .badge-baixa { background-color: rgba(40,167,69,0.1); color: var(--success); }
+        .badge-media { background-color: rgba(246,177,37,0.1); color: var(--secondary); }
+        .badge-alta, .badge-urgente { background-color: rgba(220,53,69,0.1); color: var(--danger); }
+        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; }
+        .info-item { display: flex; flex-direction: column; }
+        .info-label { font-size: 0.9rem; color: var(--dark-gray); opacity: 0.7; margin-bottom: 0.3rem; }
+        .info-value { font-size: 1rem; font-weight: 600; color: var(--dark-gray); }
+        .description-box { background-color: var(--light-gray); padding: 1.5rem; border-radius: 8px; margin-top: 1rem; }
+        .description-text { white-space: pre-line; line-height: 1.6; }
+        .sidebar { display: flex; flex-direction: column; gap: 2rem; }
+        .action-card { background-color: var(--white); border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .action-group { margin-bottom: 1.5rem; }
+        .action-group:last-child { margin-bottom: 0; }
+        .action-title { font-size: 1rem; font-weight: 600; margin-bottom: 1rem; color: var(--dark-gray); }
+        .btn { padding: 0.6rem 1.2rem; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; transition: all 0.3s; display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; font-size: 0.9rem; }
+        .btn-primary { background-color: var(--primary); color: var(--white); }
+        .btn-primary:hover { background-color: #003399; transform: translateY(-2px); }
+        .btn-secondary { background-color: var(--secondary); color: var(--dark-gray); }
+        .btn-secondary:hover { background-color: #e0a020; transform: translateY(-2px); }
+        .btn-success { background-color: var(--success); color: var(--white); }
+        .btn-success:hover { background-color: #218838; transform: translateY(-2px); }
+        .btn-danger { background-color: var(--danger); color: var(--white); }
+        .btn-danger:hover { background-color: #c82333; transform: translateY(-2px); }
+        .btn-info { background-color: var(--info); color: var(--white); }
+        .btn-info:hover { background-color: #138496; transform: translateY(-2px); }
+        .btn-sm { padding: 0.3rem 0.8rem; font-size: 0.8rem; }
+        .btn-block { display: block; width: 100%; text-align: center; }
+        .form-group { margin-bottom: 1rem; }
+        .form-label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--dark-gray); font-size: 0.9rem; }
+        .form-control { width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px; font-size: 0.9rem; transition: all 0.3s; }
+        .form-control:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px rgba(0,70,184,0.2); }
+        textarea.form-control { min-height: 100px; resize: vertical; }
+        .timeline { position: relative; padding-left: 2rem; }
+        .timeline::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: var(--light-gray); }
+        .timeline-item { position: relative; margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--light-gray); }
+        .timeline-item:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+        .timeline-item::before { content: ''; position: absolute; left: -2.3rem; top: 0.3rem; width: 12px; height: 12px; border-radius: 50%; background: var(--primary); border: 2px solid var(--white); box-shadow: 0 0 0 2px var(--primary); }
+        .timeline-date { font-size: 0.8rem; color: var(--dark-gray); opacity: 0.7; margin-bottom: 0.3rem; }
+        .timeline-content { font-size: 0.9rem; color: var(--dark-gray); }
+        .timeline-author { font-weight: 600; color: var(--primary); }
+        .attachments-list { margin-top: 1rem; }
+        .attachment-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background-color: var(--light-gray); border-radius: 8px; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem; }
+        .attachment-info { display: flex; align-items: center; gap: 0.5rem; flex: 1; }
+        .attachment-info i { font-size: 1.2rem; color: var(--primary); }
+        .attachment-actions { display: flex; gap: 0.5rem; }
+        .toast-notification { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); background-color: var(--dark-gray); color: white; padding: 1rem 2rem; border-radius: 8px; z-index: 1000; animation: slideUp 0.3s ease-out; }
+        .toast-success { background-color: var(--success); }
+        .toast-error { background-color: var(--danger); }
+        .toast-info { background-color: var(--info); }
+        @keyframes slideUp { from { transform: translateX(-50%) translateY(100px); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
+        .modal.active { display: flex; }
+        .modal-content { background-color: var(--white); border-radius: 12px; padding: 2rem; max-width: 90%; width: auto; max-height: 90vh; overflow-y: auto; }
+        .modal-content.large { max-width: 90%; width: 800px; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--light-gray); }
+        .modal-title { font-size: 1.2rem; font-weight: 600; }
+        .close-modal { cursor: pointer; font-size: 1.5rem; }
+        .loading { display: inline-block; width: 20px; height: 20px; border: 2px solid #f3f3f3; border-top: 2px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin-right: 0.5rem; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .whatsapp-float { position: fixed; bottom: 2rem; right: 2rem; width: 60px; height: 60px; background-color: #25D366; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(37,211,102,0.4); z-index: 100; transition: transform 0.3s; animation: pulse 2s infinite; text-decoration: none; }
+        .whatsapp-float:hover { transform: scale(1.1); }
+        .whatsapp-float i { color: white; font-size: 1.8rem; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(37,211,102,0.7); } 70% { box-shadow: 0 0 0 10px rgba(37,211,102,0); } 100% { box-shadow: 0 0 0 0 rgba(37,211,102,0); } }
+        @media (max-width: 1024px) { .details-layout { grid-template-columns: 1fr; } }
+        @media (max-width: 768px) { .header-content { flex-direction: column; gap: 1rem; text-align: center; } .page-header { flex-direction: column; gap: 1rem; align-items: flex-start; } .info-grid { grid-template-columns: 1fr; } .whatsapp-float { bottom: 1rem; right: 1rem; width: 50px; height: 50px; } .whatsapp-float i { font-size: 1.5rem; } .attachment-item { flex-direction: column; align-items: flex-start; } .attachment-actions { align-self: flex-end; } }
+        /* Estilo para pré-visualização de imagens */
+        .preview-image { max-width: 100%; max-height: 70vh; margin: 0 auto; display: block; }
+        .preview-pdf { width: 100%; height: 70vh; border: none; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo"><div class="logo-icon"><i class="fas fa-headset"></i></div><div class="logo-text">Ncontas</div></div>
+                <div class="user-info"><div class="user-avatar"><%= user.nome.charAt(0).toUpperCase() %></div><div><div><%= user.nome %></div><div style="font-size:0.8rem; opacity:0.8;">Online</div></div></div>
+            </div>
+        </div>
+    </header>
+    <main>
+        <div class="container">
+            <div class="page-header">
+                <h1 class="page-title"><i class="fas fa-ticket-alt"></i> Detalhes da Solicitação - Código: <%= solicitacao.codigo %></h1>
+                <a href="/dashboard" class="back-btn"><i class="fas fa-arrow-left"></i> Voltar para Dashboard</a>
+            </div>
+            <div class="details-layout">
+                <div class="main-info">
+                    <div class="info-card"><div class="card-header"><h2 class="card-title"><i class="fas fa-user"></i> Informações do Cliente</h2></div><div class="info-grid"><div class="info-item"><span class="info-label">Nome</span><span class="info-value"><%= solicitacao.cliente_nome %></span></div><div class="info-item"><span class="info-label">Email</span><span class="info-value"><%= solicitacao.cliente_email %></span></div><div class="info-item"><span class="info-label">Telefone</span><span class="info-value"><%= solicitacao.cliente_telefone || 'Não informado' %></span></div><div class="info-item"><span class="info-label">Data Abertura</span><span class="info-value"><%= new Date(solicitacao.data_abertura).toLocaleString('pt-BR') %></span></div></div></div>
+                    <div class="info-card"><div class="card-header"><h2 class="card-title"><i class="fas fa-info-circle"></i> Detalhes da Solicitação</h2><div><span class="badge badge-<%= solicitacao.prioridade %>"><%= solicitacao.prioridade.charAt(0).toUpperCase() + solicitacao.prioridade.slice(1) %></span><span class="badge badge-<%= solicitacao.status %>"><%= solicitacao.status.replace('_', ' ') %></span></div></div><div class="info-grid"><div class="info-item"><span class="info-label">Tipo</span><span class="info-value"><%= solicitacao.tipo.charAt(0).toUpperCase() + solicitacao.tipo.slice(1) %></span></div><div class="info-item"><span class="info-label">Categoria</span><span class="info-value"><%= solicitacao.categoria ? solicitacao.categoria.charAt(0).toUpperCase() + solicitacao.categoria.slice(1) : 'Não informada' %></span></div><div class="info-item"><span class="info-label">Responsável</span><span class="info-value"><%= solicitacao.usuario_responsavel || 'Não atribuído' %></span></div><div class="info-item"><span class="info-label">Última Atualização</span><span class="info-value"><%= new Date(solicitacao.updatedAt).toLocaleString('pt-BR') %></span></div></div></div>
+                    <div class="info-card"><div class="card-header"><h2 class="card-title"><i class="fas fa-file-alt"></i> Descrição da Solicitação</h2></div><div class="form-group"><label class="form-label">Assunto</label><div class="description-box"><p class="description-text"><%= solicitacao.titulo %></p></div></div><div class="form-group"><label class="form-label">Descrição Detalhada</label><div class="description-box"><p class="description-text"><%= solicitacao.descricao %></p></div></div></div>
+                    <div class="info-card"><div class="card-header"><h2 class="card-title"><i class="fas fa-history"></i> Histórico de Atualizações</h2></div><div class="timeline" id="timeline-container"><div style="text-align:center; padding:2rem;">Carregando histórico...</div></div></div>
+                </div>
+                <div class="sidebar">
+                    <div class="action-card"><h3 class="action-title">Ações Rápidas</h3><div class="action-group"><button class="btn btn-success btn-block" onclick="updateStatus('resolvido', this)"><i class="fas fa-check"></i> Marcar como Resolvida</button></div><div class="action-group"><button class="btn btn-danger btn-block" onclick="updateStatus('cancelado', this)"><i class="fas fa-times"></i> Cancelar Solicitação</button></div><div class="action-group"><button class="btn btn-info btn-block" onclick="openNotificationModal()"><i class="fas fa-bell"></i> Notificar Cliente</button></div></div>
+                    <div class="action-card"><form id="statusForm" onsubmit="updateStatusWithForm(event)"><h3 class="action-title">Alterar Status</h3><div class="form-group"><select id="status" name="status" class="form-control"><option value="pendente" <%= solicitacao.status === 'pendente' ? 'selected' : '' %>>Pendente</option><option value="em_analise" <%= solicitacao.status === 'em_analise' ? 'selected' : '' %>>Em Análise</option><option value="em_andamento" <%= solicitacao.status === 'em_andamento' ? 'selected' : '' %>>Em Andamento</option><option value="resolvido" <%= solicitacao.status === 'resolvido' ? 'selected' : '' %>>Resolvido</option><option value="cancelado" <%= solicitacao.status === 'cancelado' ? 'selected' : '' %>>Cancelado</option></select></div><button type="submit" class="btn btn-primary btn-block"><i class="fas fa-sync"></i> Atualizar Status</button></form></div>
+                    <div class="action-card"><form id="responsavelForm" onsubmit="updateResponsavel(event)"><h3 class="action-title">Atribuir Responsável</h3><div class="form-group"><select id="responsavel" name="responsavel" class="form-control"><option value="">Selecione um responsável</option><option value="João Silva" <%= solicitacao.usuario_responsavel === 'João Silva' ? 'selected' : '' %>>João Silva</option><option value="Maria Santos" <%= solicitacao.usuario_responsavel === 'Maria Santos' ? 'selected' : '' %>>Maria Santos</option><option value="Pedro Costa" <%= solicitacao.usuario_responsavel === 'Pedro Costa' ? 'selected' : '' %>>Pedro Costa</option><option value="Ana Oliveira" <%= solicitacao.usuario_responsavel === 'Ana Oliveira' ? 'selected' : '' %>>Ana Oliveira</option></select></div><button type="submit" class="btn btn-primary btn-block"><i class="fas fa-user-check"></i> Atribuir</button></form></div>
+                    <div class="action-card"><form id="notaForm" onsubmit="addNota(event)"><h3 class="action-title">Adicionar Nota</h3><div class="form-group"><textarea id="nota" name="nota" class="form-control" placeholder="Digite uma nota ou atualização..." required></textarea></div><button type="submit" class="btn btn-primary btn-block"><i class="fas fa-plus"></i> Adicionar Nota</button></form></div>
+                    <div class="action-card"><h3 class="action-title">Anexos</h3><form id="anexoForm" onsubmit="uploadAnexo(event)"><div class="form-group"><input type="file" id="anexo" name="anexo" class="form-control" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"></div><button type="submit" class="btn btn-secondary btn-block"><i class="fas fa-paperclip"></i> Anexar Arquivo</button></form><div class="attachments-list" id="attachments-list"><div style="text-align:center; padding:1rem;">Nenhum anexo</div></div></div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <!-- Modal de Notificação -->
+    <div id="notificationModal" class="modal"><div class="modal-content"><div class="modal-header"><h3 class="modal-title">Notificar Cliente</h3><span class="close-modal" onclick="closeModal('notificationModal')">&times;</span></div><form id="notificationForm" onsubmit="sendNotification(event)"><div class="form-group"><label class="form-label">Método de Notificação</label><select id="notificacaoMetodo" class="form-control" required><option value="email">Email</option><option value="whatsapp">WhatsApp</option><option value="ambos">Ambos</option></select></div><div class="form-group"><label class="form-label">Mensagem</label><textarea id="mensagem" class="form-control" rows="4" required>Prezado(a) cliente,
+
+Sua solicitação #<%= solicitacao.codigo %> foi atualizada. Status atual: <%= solicitacao.status.replace('_', ' ').toUpperCase() %>
+
+Acesse o sistema para mais detalhes.
+
+Atenciosamente,
+Equipe de Suporte</textarea></div><button type="submit" class="btn btn-primary btn-block"><i class="fas fa-paper-plane"></i> Enviar Notificação</button></form></div></div>
+    <!-- Modal de Pré-visualização -->
+    <div id="previewModal" class="modal"><div class="modal-content large" id="previewContent"><div class="modal-header"><h3 class="modal-title" id="previewTitle">Pré-visualização</h3><span class="close-modal" onclick="closeModal('previewModal')">&times;</span></div><div id="previewBody"></div></div></div>
+    <!-- Botão WhatsApp -->
+    <% if (solicitacao.cliente_telefone) { %><a href="https://wa.me/<%= solicitacao.cliente_telefone.replace(/\D/g, '') %>?text=Olá, preciso de ajuda com a solicitação #<%= solicitacao.codigo %>" class="whatsapp-float" target="_blank"><i class="fab fa-whatsapp"></i></a>
+    <% } else { %><a href="https://wa.me/5511999999999?text=Olá, preciso de ajuda com a solicitação #<%= solicitacao.codigo %>" class="whatsapp-float" target="_blank"><i class="fab fa-whatsapp"></i></a><% } %>
+    <script>
+        const solicitacaoId = <%= solicitacao.id %>;
+        const clienteEmail = '<%= solicitacao.cliente_email %>';
+        const clienteTelefone = '<%= solicitacao.cliente_telefone || "" %>';
+        const solicitacaoCodigo = '<%= solicitacao.codigo %>';
+        function showToast(message, type = 'success') { const toast = document.createElement('div'); toast.className = `toast-notification toast-${type}`; toast.innerHTML = message; document.body.appendChild(toast); setTimeout(() => toast.remove(), 3000); }
+        // Função para carregar histórico e anexos
+        async function loadHistorico() { try { const response = await fetch(`/solicitacoes/${solicitacaoId}/historico`); const historico = await response.json(); const timelineContainer = document.getElementById('timeline-container'); if (!historico || historico.length === 0) { timelineContainer.innerHTML = '<div style="text-align:center; padding:2rem;">Nenhuma atualização registrada</div>'; return; } timelineContainer.innerHTML = historico.map(item => `<div class="timeline-item"><div class="timeline-date">${new Date(item.data).toLocaleString('pt-BR')}</div><div class="timeline-content"><span class="timeline-author">${escapeHtml(item.autor)}:</span> ${escapeHtml(item.mensagem)}</div></div>`).join(''); } catch (error) { console.error(error); document.getElementById('timeline-container').innerHTML = '<div style="text-align:center; padding:2rem; color:red;">Erro ao carregar histórico</div>'; } }
+        async function loadAnexos() { try { const response = await fetch(`/solicitacoes/${solicitacaoId}/anexos`); const anexos = await response.json(); const attachmentsList = document.getElementById('attachments-list'); if (!anexos || anexos.length === 0) { attachmentsList.innerHTML = '<div style="text-align:center; padding:1rem;">Nenhum anexo</div>'; return; } attachmentsList.innerHTML = anexos.map(anexo => `<div class="attachment-item"><div class="attachment-info"><i class="fas ${getFileIcon(anexo.tipo)}"></i><span>${anexo.nome}</span><span style="font-size:0.75rem; color:#666;">(${formatFileSize(anexo.tamanho)})</span></div><div class="attachment-actions"><a href="${anexo.caminho}" class="btn btn-sm btn-primary" download><i class="fas fa-download"></i> Download</a><button class="btn btn-sm btn-info" onclick="previewFile('${anexo.caminho}', '${anexo.tipo}', '${escapeHtml(anexo.nome)}')"><i class="fas fa-eye"></i> Visualizar</button></div></div>`).join(''); } catch (error) { console.error(error); } }
+        function getFileIcon(tipo) { if (tipo.includes('pdf')) return 'fa-file-pdf'; if (tipo.includes('image')) return 'fa-file-image'; if (tipo.includes('word')) return 'fa-file-word'; return 'fa-file'; }
+        function formatFileSize(bytes) { if (bytes < 1024) return bytes + ' B'; if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB'; return (bytes / 1048576).toFixed(1) + ' MB'; }
+        function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, function(m) { if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;'; return m; }); }
+        // Pré-visualização de arquivos
+        function previewFile(url, tipo, nome) { const modal = document.getElementById('previewModal'); const title = document.getElementById('previewTitle'); const body = document.getElementById('previewBody'); title.innerHTML = `<i class="fas ${getFileIcon(tipo)}"></i> ${nome}`; body.innerHTML = ''; if (tipo.includes('image')) { const img = document.createElement('img'); img.src = url; img.className = 'preview-image'; img.alt = nome; body.appendChild(img); } else if (tipo.includes('pdf')) { const iframe = document.createElement('iframe'); iframe.src = url; iframe.className = 'preview-pdf'; body.appendChild(iframe); } else { body.innerHTML = `<div style="text-align:center; padding:2rem;"><i class="fas fa-file fa-4x" style="color:var(--primary);"></i><p>Pré-visualização não disponível para este tipo de arquivo.</p><a href="${url}" class="btn btn-primary" download><i class="fas fa-download"></i> Baixar arquivo</a></div>`; } modal.classList.add('active'); }
+        // Atualizar status, responsável, nota, anexo (com recarga das listas)
+        async function updateStatus(status, btn) { if (!confirm(`Deseja marcar esta solicitação como ${status}?`)) return; const originalText = btn.innerHTML; btn.innerHTML = '<span class="loading"></span> Atualizando...'; btn.disabled = true; try { const response = await fetch(`/solicitacoes/${solicitacaoId}/status`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) }); const result = await response.json(); if (response.ok && result.success) { showToast('Status atualizado com sucesso!', 'success'); setTimeout(() => location.reload(), 1500); } else { showToast('Erro ao atualizar status', 'error'); btn.innerHTML = originalText; btn.disabled = false; } } catch (error) { showToast('Erro de conexão', 'error'); btn.innerHTML = originalText; btn.disabled = false; } }
+        async function updateStatusWithForm(event) { event.preventDefault(); const status = document.getElementById('status').value; const btn = event.submitter; const originalText = btn.innerHTML; btn.innerHTML = '<span class="loading"></span> Atualizando...'; btn.disabled = true; try { const response = await fetch(`/solicitacoes/${solicitacaoId}/status`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) }); const result = await response.json(); if (response.ok && result.success) { showToast('Status atualizado com sucesso!', 'success'); setTimeout(() => location.reload(), 1500); } else { showToast('Erro ao atualizar status', 'error'); btn.innerHTML = originalText; btn.disabled = false; } } catch (error) { showToast('Erro de conexão', 'error'); btn.innerHTML = originalText; btn.disabled = false; } }
+        async function updateResponsavel(event) { event.preventDefault(); const responsavel = document.getElementById('responsavel').value; if (!responsavel) { showToast('Selecione um responsável', 'error'); return; } const btn = event.submitter; const originalText = btn.innerHTML; btn.innerHTML = '<span class="loading"></span> Atribuindo...'; btn.disabled = true; try { const response = await fetch(`/solicitacoes/${solicitacaoId}/responsavel`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ responsavel }) }); const result = await response.json(); if (response.ok && result.success) { showToast('Responsável atribuído com sucesso!', 'success'); setTimeout(() => location.reload(), 1500); } else { showToast('Erro ao atribuir responsável', 'error'); btn.innerHTML = originalText; btn.disabled = false; } } catch (error) { showToast('Erro de conexão', 'error'); btn.innerHTML = originalText; btn.disabled = false; } }
+        async function addNota(event) { event.preventDefault(); const nota = document.getElementById('nota').value; if (!nota) { showToast('Digite uma nota', 'error'); return; } const btn = event.submitter; const originalText = btn.innerHTML; btn.innerHTML = '<span class="loading"></span> Adicionando...'; btn.disabled = true; try { const response = await fetch(`/solicitacoes/${solicitacaoId}/nota`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nota, autor: '<%= user.nome %>' }) }); const result = await response.json(); if (response.ok && result.success) { showToast('Nota adicionada com sucesso!', 'success'); document.getElementById('nota').value = ''; loadHistorico(); btn.innerHTML = originalText; btn.disabled = false; } else { showToast('Erro ao adicionar nota', 'error'); btn.innerHTML = originalText; btn.disabled = false; } } catch (error) { showToast('Erro de conexão', 'error'); btn.innerHTML = originalText; btn.disabled = false; } }
+        async function uploadAnexo(event) { event.preventDefault(); const fileInput = document.getElementById('anexo'); const file = fileInput.files[0]; if (!file) { showToast('Selecione um arquivo', 'error'); return; } const btn = event.submitter; const originalText = btn.innerHTML; btn.innerHTML = '<span class="loading"></span> Enviando...'; btn.disabled = true; const formData = new FormData(); formData.append('anexo', file); try { const response = await fetch(`/solicitacoes/${solicitacaoId}/anexos`, { method: 'POST', body: formData }); const result = await response.json(); if (response.ok && result.success) { showToast('Anexo enviado com sucesso!', 'success'); fileInput.value = ''; loadAnexos(); loadHistorico(); btn.innerHTML = originalText; btn.disabled = false; } else { showToast('Erro ao enviar anexo', 'error'); btn.innerHTML = originalText; btn.disabled = false; } } catch (error) { showToast('Erro de conexão', 'error'); btn.innerHTML = originalText; btn.disabled = false; } }
+        function openNotificationModal() { document.getElementById('notificationModal').classList.add('active'); }
+        function closeModal(modalId) { document.getElementById(modalId).classList.remove('active'); }
+        async function sendNotification(event) { event.preventDefault(); const metodo = document.getElementById('notificacaoMetodo').value; const mensagem = document.getElementById('mensagem').value; const btn = event.submitter; const originalText = btn.innerHTML; btn.innerHTML = '<span class="loading"></span> Enviando...'; btn.disabled = true; try { const response = await fetch(`/solicitacoes/${solicitacaoId}/notificar`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ metodo, mensagem, email: clienteEmail, telefone: clienteTelefone }) }); const result = await response.json(); if (response.ok && result.success) { showToast(`Notificação enviada via ${metodo}!`, 'success'); closeModal('notificationModal'); document.getElementById('notificationForm').reset(); } else { showToast('Erro ao enviar notificação', 'error'); } } catch (error) { showToast('Erro de conexão', 'error'); } finally { btn.innerHTML = originalText; btn.disabled = false; } }
+        window.addEventListener('click', function(event) { if (event.target.classList.contains('modal')) event.target.classList.remove('active'); });
+        document.addEventListener('DOMContentLoaded', function() { loadHistorico(); loadAnexos(); });
+    </script>
+</body>
+</html>

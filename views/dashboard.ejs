@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Central de Gestão - Recebimento e Tratamento</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        /* ========== ESTILOS ========== */
+        :root {
+            --primary: #0046B8;
+            --secondary: #F6B125;
+            --white: #FFFFFF;
+            --light-gray: #F5F5F5;
+            --dark-gray: #333333;
+            --success: #28a745;
+            --warning: #ffc107;
+            --danger: #dc3545;
+            --info: #17a2b8;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--light-gray); color: var(--dark-gray); line-height: 1.6; min-height: 100vh; display: flex; flex-direction: column; }
+        .container { width: 100%; max-width: 1400px; margin: 0 auto; padding: 0 1rem; }
+        header { background: linear-gradient(135deg, var(--primary) 0%, #003399 100%); color: var(--white); box-shadow: 0 4px 12px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
+        .header-content { display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; }
+        .logo { display: flex; align-items: center; gap: 1rem; }
+        .logo-icon { width: 50px; height: 50px; background-color: rgba(255,255,255,0.15); border-radius: 12px; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); }
+        .logo-icon i { font-size: 1.5rem; color: var(--secondary); }
+        .logo-text { font-size: 1.5rem; font-weight: 700; }
+        .logo-subtitle { font-size: 0.9rem; opacity: 0.8; margin-top: 0.2rem; }
+        .user-info { display: flex; align-items: center; gap: 1rem; position: relative; }
+        .user-avatar { width: 40px; height: 40px; border-radius: 50%; background-color: var(--secondary); display: flex; align-items: center; justify-content: center; color: var(--dark-gray); font-weight: bold; }
+        .notification-bell { position: relative; cursor: pointer; margin-right: 1rem; font-size: 1.5rem; color: var(--white); }
+        .notification-bell .badge-count { position: absolute; top: -8px; right: -12px; background-color: var(--danger); color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.7rem; font-weight: bold; min-width: 18px; text-align: center; }
+        .nav-menu { background-color: var(--white); box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 2rem; }
+        .nav-container { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; flex-wrap: wrap; gap: 1rem; }
+        .nav-links { display: flex; gap: 2rem; flex-wrap: wrap; }
+        .nav-link { padding: 0.7rem 1rem; border-radius: 8px; color: var(--dark-gray); text-decoration: none; font-weight: 500; transition: all 0.3s; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; }
+        .nav-link:hover, .nav-link.active { background-color: rgba(0,70,184,0.1); color: var(--primary); }
+        main { flex: 1; padding: 0 0 2rem 0; }
+        .page-title { font-size: 2rem; font-weight: 700; margin-bottom: 1.5rem; color: var(--primary); display: flex; align-items: center; gap: 0.5rem; }
+        .page-title i { color: var(--secondary); }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .stat-card { background-color: var(--white); border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; transition: transform 0.3s; }
+        .stat-card:hover { transform: translateY(-5px); }
+        .stat-info h3 { font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .stat-info p { opacity: 0.7; font-size: 0.9rem; }
+        .stat-icon { width: 60px; height: 60px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
+        .stat-total .stat-icon { background-color: rgba(0,70,184,0.1); color: var(--primary); }
+        .stat-pending .stat-icon { background-color: rgba(246,177,37,0.1); color: var(--secondary); }
+        .stat-processing .stat-icon { background-color: rgba(0,70,184,0.1); color: var(--primary); }
+        .stat-resolved .stat-icon { background-color: rgba(40,167,69,0.1); color: var(--success); }
+        .charts-section { background-color: var(--white); border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 2rem; }
+        .charts-title { font-size: 1.4rem; font-weight: 700; margin-bottom: 1.5rem; color: var(--primary); display: flex; align-items: center; gap: 0.5rem; }
+        .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem; }
+        .chart-card { background: var(--light-gray); border-radius: 12px; padding: 1rem; }
+        .chart-card h3 { margin-bottom: 1rem; font-size: 1.1rem; }
+        canvas { max-height: 300px; width: 100%; }
+        .filters-card { background-color: var(--white); border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 2rem; }
+        .filters-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
+        .filters-title { font-size: 1.2rem; font-weight: 600; }
+        .filters-actions { display: flex; gap: 1rem; flex-wrap: wrap; }
+        .btn { padding: 0.6rem 1.2rem; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; transition: all 0.3s; display: inline-flex; align-items: center; gap: 0.5rem; }
+        .btn-primary { background-color: var(--primary); color: var(--white); }
+        .btn-primary:hover { background-color: #003399; transform: translateY(-2px); }
+        .btn-secondary { background-color: var(--secondary); color: var(--dark-gray); }
+        .btn-secondary:hover { background-color: #e0a020; transform: translateY(-2px); }
+        .btn-success { background-color: var(--success); color: var(--white); }
+        .btn-success:hover { background-color: #218838; transform: translateY(-2px); }
+        .filters-content { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+        .filter-group { display: flex; flex-direction: column; }
+        .filter-label { margin-bottom: 0.5rem; font-weight: 500; font-size: 0.9rem; }
+        .filter-select, .filter-input { padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px; font-size: 0.9rem; }
+        .table-card { background-color: var(--white); border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow: hidden; margin-bottom: 2rem; }
+        .table-header { padding: 1.5rem; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+        .table-title { font-size: 1.2rem; font-weight: 600; }
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        thead { background-color: var(--light-gray); }
+        th { padding: 1rem; text-align: left; font-weight: 600; font-size: 0.9rem; text-transform: uppercase; }
+        tbody tr { border-bottom: 1px solid #eee; transition: background-color 0.2s; }
+        tbody tr:hover { background-color: rgba(0,70,184,0.03); }
+        td { padding: 1rem; font-size: 0.9rem; }
+        .badge { display: inline-block; padding: 0.3rem 0.7rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
+        .badge-pendente { background-color: rgba(246,177,37,0.1); color: var(--secondary); }
+        .badge-em_andamento { background-color: rgba(0,70,184,0.1); color: var(--primary); }
+        .badge-resolvido { background-color: rgba(40,167,69,0.1); color: var(--success); }
+        .badge-baixa { background-color: rgba(40,167,69,0.1); color: var(--success); }
+        .badge-media { background-color: rgba(246,177,37,0.1); color: var(--secondary); }
+        .badge-alta { background-color: rgba(220,53,69,0.1); color: var(--danger); }
+        .action-buttons { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .action-btn { padding: 0.4rem 0.8rem; border-radius: 6px; border: none; font-size: 0.8rem; font-weight: 500; cursor: pointer; transition: all 0.2s; text-decoration: none; display: inline-block; }
+        .btn-view { background-color: rgba(0,70,184,0.1); color: var(--primary); }
+        .btn-view:hover { background-color: rgba(0,70,184,0.2); }
+        .btn-edit { background-color: rgba(246,177,37,0.1); color: var(--secondary); }
+        .btn-edit:hover { background-color: rgba(246,177,37,0.2); }
+        .btn-resolve { background-color: rgba(40,167,69,0.1); color: var(--success); }
+        .btn-resolve:hover { background-color: rgba(40,167,69,0.2); }
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; opacity: 0; visibility: hidden; transition: all 0.3s ease; }
+        .modal.active { opacity: 1; visibility: visible; }
+        .modal-content { background: var(--white); border-radius: 20px; width: 90%; max-width: 700px; max-height: 90vh; overflow-y: auto; padding: 2rem; position: relative; transform: translateY(20px); transition: transform 0.3s; box-shadow: 0 25px 50px rgba(0,0,0,0.2); }
+        .modal.active .modal-content { transform: translateY(0); }
+        .close-modal { position: absolute; top: 1rem; right: 1.5rem; font-size: 1.8rem; cursor: pointer; opacity: 0.7; }
+        .close-modal:hover { opacity: 1; }
+        .modal-title { font-size: 1.8rem; margin-bottom: 0.5rem; text-align: center; }
+        .modal-subtitle { text-align: center; opacity: 0.7; margin-bottom: 2rem; }
+        .form-group { margin-bottom: 1.5rem; }
+        .form-label { display: block; margin-bottom: 0.5rem; font-weight: 600; }
+        .form-control { width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 8px; font-size: 0.9rem; }
+        .form-control:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px rgba(0,70,184,0.2); }
+        .toast-message { position: fixed; bottom: 20px; right: 20px; background: var(--dark-gray); color: white; padding: 12px 20px; border-radius: 8px; display: flex; align-items: center; gap: 10px; z-index: 2000; box-shadow: 0 4px 12px rgba(0,0,0,0.15); transform: translateX(400px); transition: transform 0.3s ease; }
+        .toast-message.show { transform: translateX(0); }
+        .toast-message.success { background: #28a745; }
+        .toast-message.error { background: #dc3545; }
+        .toast-message.info { background: var(--primary); }
+        .spinner { display: inline-block; width: 1rem; height: 1rem; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: white; animation: spin 0.8s linear infinite; margin-right: 0.5rem; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .btn:disabled { opacity: 0.7; cursor: not-allowed; }
+        .whatsapp-float { position: fixed; bottom: 2rem; right: 2rem; width: 60px; height: 60px; background-color: #25D366; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(37,211,102,0.4); z-index: 100; transition: transform 0.3s; animation: pulse 2s infinite; text-decoration: none; }
+        .whatsapp-float:hover { transform: scale(1.1); }
+        .whatsapp-float i { color: white; font-size: 1.8rem; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(37,211,102,0.7); } 70% { box-shadow: 0 0 0 10px rgba(37,211,102,0); } 100% { box-shadow: 0 0 0 0 rgba(37,211,102,0); } }
+        @media (max-width: 768px) { .header-content, .nav-container { flex-direction: column; text-align: center; gap: 1rem; } .nav-links { justify-content: center; } .filters-header { flex-direction: column; align-items: stretch; } .charts-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <div class="logo-icon"><i class="fas fa-headset"></i></div>
+                    <div><div class="logo-text">Ncontas</div><div class="logo-subtitle">Central de Gestão de Solicitações</div></div>
+                </div>
+                <div class="user-info">
+                    <div class="notification-bell" id="notificationBell">
+                        <i class="fas fa-bell"></i>
+                        <span class="badge-count" id="notificationCount" style="display: none;">0</span>
+                    </div>
+                    <div class="user-avatar"><%= user.nome.charAt(0).toUpperCase() %></div>
+                    <div><div><%= user.nome %></div><div style="font-size:0.8rem;"><a href="/logout" style="color:white; text-decoration:none;">Terminar sessão</a></div></div>
+                </div>
+            </div>
+        </div>
+    </header>
+    <nav class="nav-menu">
+        <div class="container nav-container">
+            <div class="nav-links">
+                <a href="#" class="nav-link active" onclick="location.reload()"><i class="fas fa-tachometer-alt"></i> Painel Principal</a>
+                <a href="#" class="nav-link" onclick="exportToExcel()"><i class="fas fa-file-excel"></i> Exportar Excel</a>
+                <a href="#" class="nav-link" onclick="exportToPDF()"><i class="fas fa-file-pdf"></i> Exportar PDF</a>
+            </div>
+            <div class="nav-actions">
+                <button class="btn btn-primary" onclick="openNewSolicitacaoModal()"><i class="fas fa-plus"></i> Nova Solicitação</button>
+            </div>
+        </div>
+    </nav>
+    <main>
+        <div class="container">
+            <h1 class="page-title"><i class="fas fa-tachometer-alt"></i> Central de Gestão de Solicitações</h1>
+            <div class="stats-grid">
+                <div class="stat-card stat-total"><div class="stat-info"><h3 id="totalCount"><%= stats.total %></h3><p>Total de Solicitações</p></div><div class="stat-icon"><i class="fas fa-list"></i></div></div>
+                <div class="stat-card stat-pending"><div class="stat-info"><h3 id="pendingCount"><%= stats.pendentes %></h3><p>Pendentes</p></div><div class="stat-icon"><i class="fas fa-clock"></i></div></div>
+                <div class="stat-card stat-processing"><div class="stat-info"><h3 id="processingCount"><%= stats.emAndamento %></h3><p>Em Processamento</p></div><div class="stat-icon"><i class="fas fa-cog"></i></div></div>
+                <div class="stat-card stat-resolved"><div class="stat-info"><h3 id="resolvedCount"><%= stats.resolvidas %></h3><p>Resolvidas</p></div><div class="stat-icon"><i class="fas fa-check"></i></div></div>
+            </div>
+            <div class="charts-section">
+                <div class="charts-title"><i class="fas fa-chart-line"></i> Dashboard Analítico</div>
+                <div class="charts-grid">
+                    <div class="chart-card"><h3>Evolução Mensal</h3><canvas id="monthlyChart"></canvas></div>
+                    <div class="chart-card"><h3>Distribuição por Status</h3><canvas id="statusChart"></canvas></div>
+                    <div class="chart-card"><h3>Prioridades</h3><canvas id="priorityChart"></canvas></div>
+                    <div class="chart-card"><h3>Categorias</h3><canvas id="categoryChart"></canvas></div>
+                </div>
+            </div>
+            <div class="filters-card">
+                <div class="filters-header">
+                    <h2 class="filters-title">Filtros e Ações</h2>
+                    <div class="filters-actions">
+                        <button class="btn btn-primary" onclick="openNewSolicitacaoModal()"><i class="fas fa-plus"></i> Nova Solicitação</button>
+                        <button class="btn btn-secondary" onclick="exportToExcel()"><i class="fas fa-file-excel"></i> Exportar Excel</button>
+                        <button class="btn btn-success" onclick="exportToPDF()"><i class="fas fa-file-pdf"></i> Exportar PDF</button>
+                    </div>
+                </div>
+                <div class="filters-content">
+                    <div class="filter-group"><label class="filter-label">Status</label><select id="filter-status" class="filter-select"><option value="all">Todos</option><option value="pendente">Pendente</option><option value="em_andamento">Em Andamento</option><option value="resolvido">Resolvido</option></select></div>
+                    <div class="filter-group"><label class="filter-label">Prioridade</label><select id="filter-priority" class="filter-select"><option value="all">Todas</option><option value="baixa">Baixa</option><option value="media">Média</option><option value="alta">Alta</option></select></div>
+                    <div class="filter-group"><label class="filter-label">Categoria</label><select id="filter-category" class="filter-select"><option value="all">Todas</option><option value="faturacao">Faturação</option><option value="servico">Serviço</option><option value="tecnico">Técnico</option><option value="outro">Outro</option></select></div>
+                    <div class="filter-group"><label class="filter-label">Data inicial</label><input type="date" id="filter-date" class="filter-input"></div>
+                </div>
+            </div>
+            <div class="table-card">
+                <div class="table-header"><h2 class="table-title">Solicitações Recebidas</h2><div class="table-actions"><span id="result-count">Mostrando <%= solicitacoesRecentes.length %> de <%= stats.total %></span></div></div>
+                <div class="table-container">
+                    <table id="solicitacoes-table">
+                        <thead><tr><th>Código</th><th>Cliente</th><th>Assunto</th><th>Tipo</th><th>Prioridade</th><th>Status</th><th>Data</th><th>Responsável</th><th>Ações</th></tr></thead>
+                        <tbody id="table-body">
+                            <% solicitacoesRecentes.forEach(solicitacao => { %>
+                            <tr data-id="<%= solicitacao.id %>" data-status="<%= solicitacao.status %>" data-priority="<%= solicitacao.prioridade %>" data-category="<%= solicitacao.categoria %>" data-date="<%= new Date(solicitacao.data_abertura).toISOString().split('T')[0] %>">
+                                <td><%= solicitacao.codigo %></td>
+                                <td><%= solicitacao.cliente_nome %></td>
+                                <td><%= solicitacao.titulo %></td>
+                                <td><span class="badge"><%= solicitacao.tipo.charAt(0).toUpperCase() + solicitacao.tipo.slice(1) %></span></td>
+                                <td><span class="badge badge-<%= solicitacao.prioridade %>"><%= solicitacao.prioridade.charAt(0).toUpperCase() + solicitacao.prioridade.slice(1) %></span></td>
+                                <td><span class="badge badge-<%= solicitacao.status %>"><%= solicitacao.status.replace('_', ' ') %></span></td>
+                                <td><%= new Date(solicitacao.data_abertura).toLocaleDateString() %></td>
+                                <td><%= solicitacao.usuario_responsavel || 'Não atribuído' %></td>
+                                <td><div class="action-buttons">
+                                    <a href="/solicitacoes/<%= solicitacao.id %>" class="action-btn btn-view"><i class="fas fa-eye"></i> Ver Detalhes</a>
+                                    <button class="action-btn btn-edit" onclick="openScheduleModalForSolicitacao(<%= solicitacao.id %>, '<%= solicitacao.cliente_nome %>', '<%= solicitacao.codigo %>')"><i class="fas fa-calendar-alt"></i> Agendar</button>
+                                    <button class="action-btn btn-resolve" onclick="updateStatus(<%= solicitacao.id %>, 'resolvido', this)"><i class="fas fa-check-circle"></i> Processar</button>
+                                </div></td>
+                            </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+    <div class="modal" id="schedule-modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeScheduleModal()">&times;</span>
+            <h2 class="modal-title">Agendar Atendimento Presencial</h2>
+            <p class="modal-subtitle">Marque um horário para assistência técnica presencial</p>
+            <form id="schedule-form">
+                <input type="hidden" name="Cliente" id="schedule-solicitacao-id">
+                <div class="form-group"><label class="form-label">Cliente</label><input type="text" id="schedule-client-name" class="form-control" readonly></div>
+                <div class="form-group"><label class="form-label">Data do Atendimento *</label><input type="date" name="data" id="schedule-date" class="form-control" required></div>
+                <div class="form-group"><label class="form-label">Horário *</label><input type="time" name="Hora" id="schedule-time" class="form-control" required></div>
+                <div class="form-group"><label class="form-label">Funcionário Responsável *</label><select name="Responsavel" id="schedule-employee" class="form-control" required>
+                    <option value="">Selecione</option><option value="João Silva">João Silva - Técnico Sênior</option><option value="Maria Santos">Maria Santos - Especialista Fiscal</option>
+                    <option value="Carlos Oliveira">Carlos Oliveira - Consultor</option><option value="Ana Costa">Ana Costa - Atendimento</option>
+                </select></div>
+                <div class="form-group"><label class="form-label">Observações</label><textarea name="Observacao" id="schedule-obs" class="form-control" rows="3"></textarea></div>
+                <div class="filters-actions" style="justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="closeScheduleModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="schedule-submit">Confirmar Agendamento</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="modal" id="new-solicitacao-modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeNewSolicitacaoModal()">&times;</span>
+            <h2 class="modal-title">Nova Solicitação</h2>
+            <p class="modal-subtitle">Registre uma nova reclamação, sugestão ou dúvida</p>
+            <form id="new-solicitacao-form">
+                <div class="form-group"><label class="form-label">Tipo *</label><select name="tipo" class="form-control" required><option value="reclamacao">Reclamação</option><option value="sugestao">Sugestão</option><option value="elogio">Elogio</option><option value="duvida">Dúvida</option></select></div>
+                <div class="form-group"><label class="form-label">Nome Completo *</label><input type="text" name="cliente_nome" class="form-control" required></div>
+                <div class="form-group"><label class="form-label">E-mail *</label><input type="email" name="cliente_email" class="form-control" required></div>
+                <div class="form-group"><label class="form-label">Telefone</label><input type="tel" name="cliente_telefone" class="form-control"></div>
+                <div class="form-group"><label class="form-label">Assunto *</label><input type="text" name="titulo" class="form-control" required></div>
+                <div class="form-group"><label class="form-label">Categoria *</label><select name="categoria" class="form-control" required><option value="faturacao">Faturação</option><option value="servico">Serviço</option><option value="tecnico">Técnico</option><option value="outro">Outro</option></select></div>
+                <div class="form-group"><label class="form-label">Descrição *</label><textarea name="descricao" class="form-control" rows="4" required></textarea></div>
+                <div class="filters-actions" style="justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="closeNewSolicitacaoModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="new-solicitacao-submit">Enviar Solicitação</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div id="toast" class="toast-message"></div>
+    <a href="https://wa.me/5511999999999?text=Olá, preciso de assistência técnica presencial" class="whatsapp-float" target="_blank"><i class="fab fa-whatsapp"></i></a>
+    <script>
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast-message ${type}`;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 4000);
+        }
+        function applyFilters() {
+            const status = document.getElementById('filter-status').value;
+            const priority = document.getElementById('filter-priority').value;
+            const category = document.getElementById('filter-category').value;
+            const date = document.getElementById('filter-date').value;
+            const rows = document.querySelectorAll('#table-body tr');
+            let visible = 0;
+            rows.forEach(row => {
+                let show = true;
+                if (status !== 'all' && row.dataset.status !== status) show = false;
+                if (priority !== 'all' && row.dataset.priority !== priority) show = false;
+                if (category !== 'all' && row.dataset.category !== category) show = false;
+                if (date && row.dataset.date !== date) show = false;
+                row.style.display = show ? '' : 'none';
+                if (show) visible++;
+            });
+            document.getElementById('result-count').innerText = `Mostrando ${visible} de ${rows.length}`;
+        }
+        document.getElementById('filter-status').addEventListener('change', applyFilters);
+        document.getElementById('filter-priority').addEventListener('change', applyFilters);
+        document.getElementById('filter-category').addEventListener('change', applyFilters);
+        document.getElementById('filter-date').addEventListener('change', applyFilters);
+        let monthlyChart, statusChart, priorityChart, categoryChart;
+        async function loadCharts() {
+            try {
+                const response = await fetch('/api/estatisticas');
+                const data = await response.json();
+                const ctxMonthly = document.getElementById('monthlyChart').getContext('2d');
+                if (monthlyChart) monthlyChart.destroy();
+                monthlyChart = new Chart(ctxMonthly, { type: 'line', data: { labels: data.meses, datasets: [{ label: 'Solicitações por mês', data: data.quantidades, borderColor: '#0046B8', backgroundColor: 'rgba(0,70,184,0.1)', fill: true, tension: 0.3 }] }, options: { responsive: true, maintainAspectRatio: true } });
+                const ctxStatus = document.getElementById('statusChart').getContext('2d');
+                if (statusChart) statusChart.destroy();
+                statusChart = new Chart(ctxStatus, { type: 'doughnut', data: { labels: ['Pendente', 'Em Andamento', 'Resolvido', 'Cancelado'], datasets: [{ data: [data.pendente, data.em_andamento, data.resolvido, data.cancelado], backgroundColor: ['#F6B125', '#0046B8', '#28a745', '#dc3545'] }] } });
+                const ctxPriority = document.getElementById('priorityChart').getContext('2d');
+                if (priorityChart) priorityChart.destroy();
+                priorityChart = new Chart(ctxPriority, { type: 'bar', data: { labels: ['Baixa', 'Média', 'Alta', 'Urgente'], datasets: [{ label: 'Quantidade', data: [data.baixa, data.media, data.alta, data.urgente], backgroundColor: '#28a745' }] } });
+                const ctxCategory = document.getElementById('categoryChart').getContext('2d');
+                if (categoryChart) categoryChart.destroy();
+                categoryChart = new Chart(ctxCategory, { type: 'pie', data: { labels: ['Faturação', 'Serviço', 'Técnico', 'Outro'], datasets: [{ data: [data.faturacao, data.servico, data.tecnico, data.outro], backgroundColor: ['#0046B8', '#F6B125', '#28a745', '#dc3545'] }] } });
+            } catch (error) { console.error('Erro ao carregar gráficos:', error); }
+        }
+        loadCharts();
+        const socket = io();
+        let notificationCount = 0;
+        const bell = document.getElementById('notificationBell');
+        const countSpan = document.getElementById('notificationCount');
+        function playNotificationSound() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                oscillator.connect(gain); gain.connect(audioCtx.destination);
+                oscillator.frequency.value = 880; gain.gain.value = 0.2;
+                oscillator.start(); gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.5);
+                oscillator.stop(audioCtx.currentTime + 0.5);
+                setTimeout(() => audioCtx.close(), 600);
+            } catch(e) { console.warn("Som não suportado", e); }
+        }
+        socket.on('nova_solicitacao', (data) => {
+            notificationCount++; countSpan.style.display = 'inline-block'; countSpan.innerText = notificationCount;
+            playNotificationSound(); showToast(`🔔 Nova solicitação de ${data.cliente_nome}: ${data.titulo}`, 'info');
+            setTimeout(() => location.reload(), 3000);
+        });
+        bell.addEventListener('click', () => { notificationCount = 0; countSpan.style.display = 'none'; showToast('Notificações marcadas como lidas', 'success'); });
+        function openScheduleModalForSolicitacao(id, clienteNome, codigo) {
+            document.getElementById('schedule-solicitacao-id').value = id;
+            document.getElementById('schedule-client-name').value = `${clienteNome} (${codigo})`;
+            document.getElementById('schedule-modal').classList.add('active');
+        }
+        function closeScheduleModal() { document.getElementById('schedule-modal').classList.remove('active'); }
+        document.getElementById('schedule-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = document.getElementById('schedule-submit');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.disabled = true; submitBtn.innerHTML = '<div class="spinner"></div> Enviando...';
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+            try {
+                const response = await fetch('/solicitacoes/agendamento', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ responsavel: data }) });
+                const result = await response.json();
+                if (response.ok && result.success) { showToast('✅ Atendimento agendado com sucesso!', 'success'); closeScheduleModal(); }
+                else { showToast('❌ Erro ao agendar: ' + (result.error || 'Tente novamente'), 'error'); }
+            } catch (error) { showToast('❌ Erro de conexão: ' + error.message, 'error'); }
+            finally { submitBtn.disabled = false; submitBtn.innerHTML = originalText; }
+        });
+        function openNewSolicitacaoModal() { document.getElementById('new-solicitacao-modal').classList.add('active'); }
+        function closeNewSolicitacaoModal() { document.getElementById('new-solicitacao-modal').classList.remove('active'); }
+        document.getElementById('new-solicitacao-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = document.getElementById('new-solicitacao-submit');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.disabled = true; submitBtn.innerHTML = '<div class="spinner"></div> Enviando...';
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+            try {
+                const response = await fetch('/solicitacoes/nova', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+                const result = await response.json();
+                if (response.ok && result.success) { showToast('✅ Solicitação criada com sucesso!', 'success'); closeNewSolicitacaoModal(); setTimeout(() => location.reload(), 1500); }
+                else { showToast('❌ Erro: ' + (result.error || 'Não foi possível criar'), 'error'); }
+            } catch (error) { showToast('❌ Erro de conexão: ' + error.message, 'error'); }
+            finally { submitBtn.disabled = false; submitBtn.innerHTML = originalText; }
+        });
+        async function updateStatus(id, newStatus, btn) {
+            if (!confirm(`Deseja marcar esta solicitação como ${newStatus}?`)) return;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<div class="spinner"></div>'; btn.disabled = true;
+            try {
+                const response = await fetch(`/solicitacoes/${id}/status`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: newStatus }) });
+                const result = await response.json();
+                if (response.ok && result.success) { showToast('✅ Status atualizado com sucesso!', 'success'); setTimeout(() => location.reload(), 1000); }
+                else { showToast('❌ Erro ao atualizar status', 'error'); btn.innerHTML = originalText; btn.disabled = false; }
+            } catch (error) { showToast('❌ Erro de conexão', 'error'); btn.innerHTML = originalText; btn.disabled = false; }
+        }
+        function exportToExcel() {
+            const table = document.getElementById('solicitacoes-table');
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.table_to_sheet(table, { raw: true });
+            XLSX.utils.book_append_sheet(wb, ws, 'Solicitacoes');
+            XLSX.writeFile(wb, `solicitacoes_${new Date().toISOString().slice(0,19)}.xlsx`);
+            showToast('📊 Exportado para Excel com sucesso!', 'success');
+        }
+        async function exportToPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('landscape', 'mm', 'a4');
+            const table = document.getElementById('solicitacoes-table');
+            const headers = []; const rows = [];
+            const thead = table.querySelectorAll('thead th');
+            thead.forEach(th => headers.push(th.innerText));
+            const tbody = table.querySelectorAll('tbody tr');
+            tbody.forEach(tr => { const row = []; tr.querySelectorAll('td').forEach((td, idx) => { if (idx < headers.length - 1) row.push(td.innerText); }); if (row.length) rows.push(row); });
+            doc.autoTable({ head: [headers.slice(0, -1)], body: rows, theme: 'striped', styles: { fontSize: 8, cellPadding: 2 }, headStyles: { fillColor: [0, 70, 184] } });
+            doc.save(`solicitacoes_${new Date().toISOString().slice(0,19)}.pdf`);
+            showToast('📄 PDF gerado com sucesso!', 'success');
+        }
+        window.addEventListener('click', (e) => { if (e.target.classList.contains('modal')) e.target.classList.remove('active'); });
+    </script>
+</body>
+</html>
