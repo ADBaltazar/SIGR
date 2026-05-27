@@ -15,19 +15,23 @@ const fs = require('fs');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// 🔧 NECESSÁRIO PARA PROXY (RAILWAY, HEROKU, ETC.) – FAZ O EXPRESS CONFIAR NO HEADER X-Forwarded-Proto
+app.set('trust proxy', 1);
+
 // Middlewares básicos
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(express.static('public'));
 app.use(cors());
 
-// Sessão
+// ==================== CONFIGURAÇÃO DE SESSÃO (CORRIGIDA PARA PRODUÇÃO) ====================
 app.use(session({
     secret: process.env.SESSION_SECRET || 'sistema-gestao-secret-mysql',
     resave: false,
     saveUninitialized: false,
+    proxy: true, // IMPORTANTE: permite que o Express use o header X-Forwarded-Proto
     cookie: {
-        secure: process.env.NODE_ENV === 'production',
+        secure: process.env.NODE_ENV === 'production' ? true : false,
         maxAge: 24 * 60 * 60 * 1000,
         httpOnly: true,
         sameSite: 'lax'
