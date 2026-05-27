@@ -3,7 +3,6 @@ const bodyParser = require('body-parser');
 const session = require('express-session');
 const path = require('path');
 const { Sequelize, DataTypes, Op } = require('sequelize');
-const bcrypt = require('bcryptjs');
 const moment = require('moment');
 const cors = require('cors');
 const multer = require('multer');
@@ -204,7 +203,8 @@ app.post('/login', async (req, res) => {
     const { email, senha } = req.body;
     try {
         const usuario = await Usuario.findOne({ where: { email } });
-        if (usuario && bcrypt.compareSync(senha, usuario.senha)) {
+        // Comparação direta (sem bcrypt)
+        if (usuario && senha === usuario.senha) {
             req.session.user = {
                 id: usuario.id,
                 nome: usuario.nome,
@@ -284,7 +284,7 @@ app.post('/solicitacoes/publica', async (req, res) => {
     }
 });
 
-// Rota pública para registro de novos usuários
+// Rota pública para registro de novos usuários (senha em texto plano)
 app.post('/registro', async (req, res) => {
     try {
         const { nome, email, senha } = req.body;
@@ -295,11 +295,11 @@ app.post('/registro', async (req, res) => {
         if (existingUser) {
             return res.status(400).json({ success: false, error: 'E-mail já registrado.' });
         }
-        const hashedPassword = bcrypt.hashSync(senha, 10);
+        // Sem hash: armazena a senha diretamente
         await Usuario.create({
             nome,
             email,
-            senha: hashedPassword,
+            senha: senha,
             tipo: 'atendente',
             ativo: true
         });
@@ -374,7 +374,6 @@ app.post('/solicitacoes/nova', requireAuth, async (req, res) => {
             categoria: categoria || 'outro'
         });
 
-        // Registrar histórico
         await HistoricoSolicitacao.create({
             solicitacao_id: novaSolicitacao.id,
             autor: req.session.user?.nome || 'Sistema',
@@ -415,7 +414,6 @@ app.get('/solicitacoes/:id', requireAuth, async (req, res) => {
 
 // ==================== ROTAS DE AÇÕES (COM HISTÓRICO E ANEXOS NAS TABELAS PRÓPRIAS) ====================
 
-// Atualizar status
 app.put('/solicitacoes/:id/status', requireAuth, async (req, res) => {
     try {
         const { status } = req.body;
@@ -441,7 +439,6 @@ app.put('/solicitacoes/:id/status', requireAuth, async (req, res) => {
     }
 });
 
-// Atribuir responsável
 app.post('/solicitacoes/:id/responsavel', requireAuth, async (req, res) => {
     try {
         const { responsavel } = req.body;
@@ -466,7 +463,6 @@ app.post('/solicitacoes/:id/responsavel', requireAuth, async (req, res) => {
     }
 });
 
-// Adicionar nota
 app.post('/solicitacoes/:id/nota', requireAuth, async (req, res) => {
     try {
         const { nota, autor } = req.body;
@@ -487,7 +483,6 @@ app.post('/solicitacoes/:id/nota', requireAuth, async (req, res) => {
     }
 });
 
-// Upload de anexo
 app.post('/solicitacoes/:id/anexos', requireAuth, upload.single('anexo'), async (req, res) => {
     try {
         const solicitacao = await Solicitacao.findByPk(req.params.id);
@@ -517,7 +512,6 @@ app.post('/solicitacoes/:id/anexos', requireAuth, upload.single('anexo'), async 
     }
 });
 
-// Rota para servir arquivos de upload
 app.get('/uploads/:filename', (req, res) => {
     const filePath = path.join(__dirname, 'public', 'uploads', req.params.filename);
     if (fs.existsSync(filePath)) {
@@ -527,7 +521,6 @@ app.get('/uploads/:filename', (req, res) => {
     }
 });
 
-// Agendamento de atendimento
 app.post('/solicitacoes/agendamento', requireAuth, async (req, res) => {
     try {
         const { responsavel } = req.body;
@@ -556,7 +549,6 @@ app.post('/solicitacoes/agendamento', requireAuth, async (req, res) => {
     }
 });
 
-// Histórico (API) - retorna dados da tabela `historico_solicitacoes`
 app.get('/solicitacoes/:id/historico', requireAuth, async (req, res) => {
     try {
         const historico = await HistoricoSolicitacao.findAll({
@@ -569,7 +561,6 @@ app.get('/solicitacoes/:id/historico', requireAuth, async (req, res) => {
     }
 });
 
-// Anexos (API) - retorna dados da tabela `anexos_solicitacoes`
 app.get('/solicitacoes/:id/anexos', requireAuth, async (req, res) => {
     try {
         const anexos = await AnexoSolicitacao.findAll({
@@ -582,7 +573,6 @@ app.get('/solicitacoes/:id/anexos', requireAuth, async (req, res) => {
     }
 });
 
-// Notificar cliente
 app.post('/solicitacoes/:id/notificar', requireAuth, async (req, res) => {
     try {
         const { metodo } = req.body;
@@ -602,7 +592,6 @@ app.post('/solicitacoes/:id/notificar', requireAuth, async (req, res) => {
     }
 });
 
-// Editar solicitação
 app.put('/solicitacoes/:id/editar', requireAuth, async (req, res) => {
     try {
         const { cliente_nome, cliente_email, cliente_telefone, titulo, categoria, prioridade, status, descricao } = req.body;
@@ -631,7 +620,6 @@ app.put('/solicitacoes/:id/editar', requireAuth, async (req, res) => {
     }
 });
 
-// Excluir solicitação (remove também histórico e anexos relacionados)
 app.delete('/solicitacoes/:id/excluir', requireAuth, async (req, res) => {
     try {
         const id = req.params.id;
@@ -644,7 +632,6 @@ app.delete('/solicitacoes/:id/excluir', requireAuth, async (req, res) => {
     }
 });
 
-// API para estatísticas (gráficos)
 app.get('/api/estatisticas', requireAuth, async (req, res) => {
     try {
         const todas = await Solicitacao.findAll();
@@ -674,7 +661,6 @@ app.get('/api/estatisticas', requireAuth, async (req, res) => {
     }
 });
 
-// Health check
 app.get('/health', async (req, res) => {
     let dbStatus = 'disconnected';
     try {
@@ -699,11 +685,11 @@ async function startServer() {
 
         const adminExists = await Usuario.findOne({ where: { email: 'admin@ncontas.com' } });
         if (!adminExists) {
-            const hashedPassword = bcrypt.hashSync('admin123', 10);
+            // Senha em texto plano (sem bcrypt)
             await Usuario.create({
                 nome: 'Administrador Ncontas',
                 email: 'admin@ncontas.com',
-                senha: hashedPassword,
+                senha: 'admin123',  // senha direta
                 tipo: 'admin',
                 ativo: true
             });
